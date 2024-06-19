@@ -3,7 +3,37 @@
 #include "math.h"
 #include "stdlib.h"
 
-#define PLAYER_SIZE 40
+void ResetGame(bool *gameintro, bool *p1ready, bool *p2ready, int *p1healvalue, int *p2healvalue,
+               int *p1energy, int *p2energy, Rectangle *player1, Rectangle *player2,
+               bool *skillturn1, float *skillcool1, int *skillframe1, int *skillx1, int *skilly1,
+               bool *skillturn2, float *skillcool2, int *skillframe2, int *skillx2, int *skilly2) {
+
+    *gameintro = true;
+    *p1ready = false;
+    *p2ready = false;
+
+    *p1healvalue = 480;
+    *p2healvalue = 300;
+    *p1energy = 300;
+    *p2energy = 300;
+
+    player1->x = 100;
+    player1->y = 440;
+    player2->x = 1500;
+    player2->y = 440;
+
+    *skillturn1 = false;
+    *skillcool1 = 0.0f;
+    *skillframe1 = 0;
+    *skillx1 = 0;
+    *skilly1 = 0;
+
+    *skillturn2 = false;
+    *skillcool2 = 0.0f;
+    *skillframe2 = 0;
+    *skillx2 = 0;
+    *skilly2 = 0;
+}
 
 int main(void)
 {   
@@ -22,6 +52,10 @@ int main(void)
     int skillx2 = 0;
     int skilly2 = 0;
 
+    int spikex = 0;
+    int spikey = 0;
+    bool spikedir = true;
+
     const int screenWidth = 1600;
     const int screenHeight = 880;
     
@@ -29,6 +63,15 @@ int main(void)
 
     Texture2D background1 = LoadTexture("Background1.png");
     Texture2D background2 = LoadTexture("Background2.png");
+
+    Texture2D Spike = LoadTexture("Animation/Spikes/4.png");
+    int SpikeWidth = Spike.width / 6;
+    int SpikeHeight = Spike.height;
+
+    Rectangle SpikeRecs[6] = {0};
+    for(int i=0;i<6;i++){
+        SpikeRecs[i] = (Rectangle){SpikeWidth*i, 0, SpikeWidth, SpikeHeight };
+    }
 
     Texture2D Elec = LoadTexture("Animation/Lightning/4.png");
     int ElecWidth = Elec.width / 10;
@@ -136,26 +179,13 @@ int main(void)
         { 0, 0, TWidth2, THeight2 },
     };
 
-    int p1healvalue = 60;
-    int p2healvalue = 60;
+    int p1healvalue = 480;
+    int p2healvalue = 300;
     int p1energy = 300;
     int p2energy = 300;
 
     Rectangle player1 = { 100, 440, SWidth1, SHeight1 };
     Rectangle player2 = { 1500, 440, SWidth2, SHeight2 };
-
-    Texture2D Fire = LoadTexture("Images/Animated_Objects/Campfire/2.png");
-    int FireWidth = Fire.width / 6;
-    int FireHeight = Fire.height;
-
-    Rectangle FireRecs[6] = {
-        { 0, 0, FireWidth, FireHeight },
-        { FireWidth, 0, FireWidth, FireHeight },
-        { FireWidth*2, 0, FireWidth, FireHeight },
-        { FireWidth*3, 0, FireWidth, FireHeight },
-        { FireWidth*4, 0, FireWidth, FireHeight },
-        { FireWidth*5, 0, FireWidth, FireHeight },
-    };
 
     Camera2D camera1 = { 0 };
     camera1.target = (Vector2){ player1.x, player1.y };
@@ -199,14 +229,14 @@ int main(void)
     bool p2ready = false;
 
     int currentFrame = 0;
+    int currentFrame1 = 0;
+    int currentFrame2 = 0;
+    int currentFrame3 = 0;
     int framesCounter = 0;
     int framesSpeed = 8;
     
     int directioncheck1 = 0;
     int directioncheck2 = 0;
-
-    int skillintcool1 = 0;
-    int skillintcool2 = 0;
 
     Rectangle splitScreenRect = { 0.0f, 0.0f, (float)screenCamera1.texture.width, (float)-screenCamera1.texture.height };
 
@@ -231,21 +261,38 @@ int main(void)
         {
             framesCounter = 0;
             currentFrame++;
+            currentFrame3++;
             if (currentFrame > 5) currentFrame = 0;
+            if(skillturn1 && skillframe1 < 8){
+                currentFrame1++;
+                if(currentFrame1 > 6)currentFrame1 = 0;skillframe1++;
+            }
+            if(skillturn2 && skillframe2 < 10){
+                currentFrame2++;
+                if(currentFrame2 > 5)currentFrame2 = 0;skillframe2++;
+            }
+            if (currentFrame3 > 30) currentFrame3 = 0;
+            
+            
         }
 
-        if (IsKeyDown(KEY_S)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.y += 5.0f; p1energy -=5;}else{player1.y += 3.0f;} directioncheck1 = 1;}
-        else if (IsKeyDown(KEY_W)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.y -= 5.0f; p1energy -=5;}else{player1.y -= 3.0f;} directioncheck1 = 2;} 
-        else if (IsKeyDown(KEY_D)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.x += 5.0f; p1energy -=5;}else{player1.x += 3.0f;} directioncheck1 = 3;} 
-        else if (IsKeyDown(KEY_A)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.x -= 5.0f; p1energy -=5;}else{player1.x -= 3.0f;} directioncheck1 = 4;} 
+        if(currentFrame3==0){
+            spikex = rand() % (screenWidth - 0 + 1) + 0;
+            spikey = rand() % (screenHeight - 0 + 1) + 0;
+        }
+
+        if (IsKeyDown(KEY_S)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.y += 6.5f; p1energy -=5;}else{player1.y += 4.0f;} directioncheck1 = 1;}
+        else if (IsKeyDown(KEY_W)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.y -= 6.5f; p1energy -=5;}else{player1.y -= 4.0f;} directioncheck1 = 2;} 
+        else if (IsKeyDown(KEY_D)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.x += 6.5f; p1energy -=5;}else{player1.x += 4.0f;} directioncheck1 = 3;} 
+        else if (IsKeyDown(KEY_A)){if(IsKeyDown(KEY_LEFT_SHIFT) && p1energy > 0){player1.x -= 6.5f; p1energy -=5;}else{player1.x -= 4.0f;} directioncheck1 = 4;} 
         else{directioncheck1 = 0;}
 
         if(IsKeyDown(KEY_LEFT_SHIFT) == false && p1energy < 300)p1energy+=1;
 
-        if (IsKeyDown(KEY_DOWN)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.y += 5.0f; p2energy -=5;}else{player2.y += 3.0f;}directioncheck2=1;}
-        else if (IsKeyDown(KEY_UP)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.y -= 5.0f; p2energy -=5;}else{player2.y -= 3.0f;}directioncheck2=2;}
-        else if (IsKeyDown(KEY_RIGHT)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.x += 5.0f; p2energy -=5;}else{player2.x += 3.0f;}directioncheck2=3;}
-        else if (IsKeyDown(KEY_LEFT)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.x -= 5.0f; p2energy -=5;}else{player2.x -= 3.0f;}directioncheck2=4;}
+        if (IsKeyDown(KEY_DOWN)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.y += 6.5f; p2energy -=5;}else{player2.y += 4.0f;}directioncheck2=1;}
+        else if (IsKeyDown(KEY_UP)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.y -= 6.5f; p2energy -=5;}else{player2.y -= 4.0f;}directioncheck2=2;}
+        else if (IsKeyDown(KEY_RIGHT)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.x += 6.5f; p2energy -=5;}else{player2.x += 4.0f;}directioncheck2=3;}
+        else if (IsKeyDown(KEY_LEFT)){if(IsKeyDown(KEY_RIGHT_SHIFT) && p2energy > 0){player2.x -= 6.5f; p2energy -=5;}else{player2.x -= 4.0f;}directioncheck2=4;}
         else{directioncheck2=0;}
 
         if(IsKeyDown(KEY_RIGHT_SHIFT) == false && p2energy < 300)p2energy+=1;
@@ -261,28 +308,35 @@ int main(void)
         if(player2.y < 0) player2.y = 0;
 
         if(skillcool1 > 0.0f){skillcool1 -= GetFrameTime();}
+        if(skillcool1 <= 0.0f){skillcool1 = 0.0f;}
 
         if(IsKeyDown(KEY_Q) && skillcool1 <= 0.0f){skillturn1 = true; skillcool1 = 2.0f; skillframe1 = 0;}
 
         if(skillcool2 > 0.0f){skillcool2 -= GetFrameTime();}
+        if(skillcool2 <= 0.0f){skillcool2 = 0.0f;}
 
-        if(IsKeyDown(KEY_SLASH) && skillcool2 <= 0.0f){skillturn2 = true; skillcool2 = 3.0f; skillframe2 = 0;}
+        if(IsKeyDown(KEY_SLASH) && skillcool2 <= 0.0f){skillturn2 = true; skillcool2 = 4.0f; skillframe2 = 0;}
 
         camera1.target = (Vector2){ player1.x, player1.y };
         camera2.target = (Vector2){ player2.x, player2.y };
 
-        if(player1.x > 800 - FireWidth && player1.x < 800 && player1.y > 440 - FireHeight && player1.y < 440){
-            p1healvalue -= 1;
+        if((player1.x >= spikex && player1.x <= spikex+SpikeWidth) || (player1.y >= spikey-SpikeHeight && player1.y <= spikey)){
+            p1healvalue -= 2;
         }
-        if(player2.x > 800 - FireWidth && player2.x < 800 && player2.y > 440 - FireHeight && player2.y < 440){
-            p2healvalue -= 1;
+        if((player2.x >= spikex && player2.x <= spikex+SpikeWidth) || (player2.y >= spikey-SpikeHeight && player2.y <= spikey)){
+            p2healvalue -= 2;
         }
-        if(player1.x > skillx2 -50 && player1.x < skillx2+ElecWidth+50 && player1.y > skilly2-50 && player1.y < skilly2+ElecHeight+50 && skillturn2 == true){
-            p1healvalue -= 3;
+        if(player1.x >= skillx2 -10 && player1.x <= skillx2+ElecWidth+10 && player1.y >= skilly2-10 && player1.y <= skilly2+ElecHeight+10 && skillturn2 == true){
+            p1healvalue -= 5;
         }
-        if(player2.x > skillx1 -30 && player2.x < skillx1+BoomWidth+30 && player2.y > skilly1-30 && player2.y < skilly1+BoomHeight+30 && skillturn1 == true){
-            p2healvalue -= 3;
+        if(player2.x >= skillx1 -10 && player2.x <= skillx1+BoomWidth+10 && player2.y >= skilly1-10 && player2.y <= skilly1+BoomHeight+10 && skillturn1 == true){
+            p2healvalue -= 7;
         }
+
+        char cooltext1[5]; 
+        snprintf(cooltext1, sizeof(cooltext1), "%.2f", skillcool1);
+        char cooltext2[5]; 
+        snprintf(cooltext2, sizeof(cooltext2), "%.2f", skillcool2);
 
             BeginTextureMode(screenCamera1);
             ClearBackground(RAYWHITE);
@@ -320,8 +374,6 @@ int main(void)
                 DrawTexture(upright, screenWidth, -40, WHITE);
                 DrawTexture(downright, screenWidth, screenHeight, WHITE);
 
-                DrawTextureRec(Fire, FireRecs[currentFrame], (Vector2){ 800, 440 }, WHITE);
-
                 switch (directioncheck1)
                 {
                 case 1:
@@ -373,23 +425,29 @@ int main(void)
                 case 0:
                     DrawTextureRec(Stand2, StandRecs2[0], (Vector2){ player2.x, player2.y }, WHITE);
                 }
+
+                for(int i=0;i<screenWidth/SpikeWidth;i++){
+                    DrawTextureRec(Spike, SpikeRecs[currentFrame3/5], (Vector2){SpikeWidth*i, spikey}, WHITE);
+                }
+                for(int i=0;i<screenHeight/SpikeHeight;i++){
+                    DrawTextureRec(Spike, SpikeRecs[currentFrame3/5], (Vector2){spikex, SpikeHeight*i}, WHITE);
+                }
+
                 if(skillturn1 && skillframe1 < 8){
                     DrawTextureRec(Boom, BoomRecs[skillframe1], (Vector2){ skillx1, skilly1 }, WHITE);
-                    skillframe1++;
                 }else{
                     skillturn1 = false;
                 }
                 if(skillturn2 && skillframe2 < 10){
                     DrawTextureRec(Elec, ElecRecs[skillframe2], (Vector2){ skillx2, skilly2 }, WHITE);
-                    skillframe2++;
                 }else{
                     skillturn2 = false;
                 }
 
-                // DrawText(skillcooltext1, player1.x-10, player1.y-30, 30, BLACK);
+                DrawText(cooltext1, player1.x, player1.y-40, 15, BLACK);
                 DrawRectangle(player1.x-10, player1.y-20, p1energy/5, 10, RED);
-                DrawRectangle(player1.x-10, player1.y-10, p1healvalue, 10, GREEN);
-                DrawRectangle(player2.x-10, player2.y-10, p2healvalue, 10, GREEN);
+                DrawRectangle(player1.x-10, player1.y-10, p1healvalue/8, 10, GREEN);
+                DrawRectangle(player2.x-10, player2.y-10, p2healvalue/5, 10, GREEN);
                 
             EndMode2D();
             
@@ -416,7 +474,6 @@ int main(void)
                         DrawTexture(mapTexture, i, j, WHITE);
                     }
                 }
-                // DrawText();
                 
                 for(int i = 0; i < screenWidth; i+=40){
                     DrawTexture(up, i, -40, WHITE);
@@ -434,8 +491,6 @@ int main(void)
                 DrawTexture(downleft, -40, screenHeight, WHITE);
                 DrawTexture(upright, screenWidth, -40, WHITE);
                 DrawTexture(downright, screenWidth, screenHeight, WHITE);
-
-                DrawTextureRec(Fire, FireRecs[currentFrame], (Vector2){ 800, 440 }, WHITE);
 
                 switch (directioncheck1)
                 {
@@ -488,23 +543,29 @@ int main(void)
                 case 0:
                     DrawTextureRec(Stand2, StandRecs2[0], (Vector2){ player2.x, player2.y }, WHITE);
                 }
+
+                for(int i=0;i<screenWidth/SpikeWidth;i++){
+                    DrawTextureRec(Spike, SpikeRecs[currentFrame3/5], (Vector2){SpikeWidth*i, spikey}, WHITE);
+                }
+                for(int i=0;i<screenHeight/SpikeHeight;i++){
+                    DrawTextureRec(Spike, SpikeRecs[currentFrame3/5], (Vector2){spikex, SpikeHeight*i}, WHITE);
+                }
+
                 if(skillturn1 && skillframe1 < 8){
                     DrawTextureRec(Boom, BoomRecs[skillframe1], (Vector2){ skillx1, skilly1 }, WHITE);
-                    skillframe1 += 1;
                 }else{
                     skillturn1 = false;
                 }
                 if(skillturn2 && skillframe2 < 10){
                     DrawTextureRec(Elec, ElecRecs[skillframe2], (Vector2){ skillx2, skilly2 }, WHITE);
-                    skillframe2 += 1;
                 }else{
                     skillturn2 = false;
                 }
                 
-                
+                DrawText(cooltext2, player2.x, player2.y-40, 15, BLACK);
                 DrawRectangle(player2.x-10, player2.y-20, p2energy/5, 10, RED);
-                DrawRectangle(player1.x-10, player1.y-10, p1healvalue, 10, GREEN);
-                DrawRectangle(player2.x-10, player2.y-10, p2healvalue, 10, GREEN);
+                DrawRectangle(player1.x-10, player1.y-10, p1healvalue/8, 10, GREEN);
+                DrawRectangle(player2.x-10, player2.y-10, p2healvalue/5, 10, GREEN);
                 
             EndMode2D();
             
@@ -515,37 +576,11 @@ int main(void)
 
         
         }else{
-            if(IsKeyDown(KEY_SPACE)){
-                p1ready = false;
-                p2ready = false;
-                gameintro = true;
-                skillturn1 = false;
-                skillcool1 = 0.0f;
-                skillframe1 = 0;
-    
-                skillx1 = 0;
-                skilly1 = 0;
-
-                skillturn2 = false;
-                skillcool2 = 0.0f;
-                skillframe2 = 0;
-
-                skillx2 = 0;
-                skilly2 = 0;
-
-                p1healvalue = 60;
-                p2healvalue = 60;
-                p1energy = 300;
-                p2energy = 300;
-    
-                int directioncheck1 = 0;
-                int directioncheck2 = 0;
-
-                player1.x = 100;
-                player1.y = 440;
-                player2.x = 1500;
-                player2.y = 440;
-                }
+            if (IsKeyDown(KEY_SPACE)) {
+                ResetGame(&gameintro, &p1ready, &p2ready, &p1healvalue, &p2healvalue, &p1energy, &p2energy,
+                &player1, &player2, &skillturn1, &skillcool1, &skillframe1, &skillx1, &skilly1,
+                &skillturn2, &skillcool2, &skillframe2, &skillx2, &skilly2); 
+            }
         }
         BeginDrawing();
             
