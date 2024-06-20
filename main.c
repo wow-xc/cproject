@@ -37,7 +37,7 @@ void ResetGame(bool *gameintro, bool *p1ready, bool *p2ready, int *p1healvalue, 
 
 int main(void)
 {   
-
+    
     bool skillturn1 = false;
     float skillcool1 = 0.0f;
     int skillframe1 = 0;
@@ -616,7 +616,6 @@ int main(void)
 
     UnloadRenderTexture(screenCamera1); 
     UnloadRenderTexture(screenCamera2);
-    
     CloseWindow();
 
     return 0;
